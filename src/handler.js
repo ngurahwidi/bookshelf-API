@@ -76,19 +76,43 @@ const addBookHandler = (request, h) => {
     .code(500);
 };
 
-const getAllBooksHandler = () => {
-  const filteredBook = books.map((book) => ({
+const getAllBooksHandler = (request, h) => {
+  const { name, reading, finished } = request.query;
+
+  let filteredBooks = books;
+
+  if (name !== undefined) {
+    filteredBooks = filteredBooks.filter((book) =>
+      book.name.toLowerCase().includes(name.toLowerCase())
+    );
+  }
+
+  if (reading !== undefined) {
+    filteredBooks = filteredBooks.filter(
+      (book) => book.reading === (reading === "1")
+    );
+  }
+
+  if (finished !== undefined) {
+    filteredBooks = filteredBooks.filter(
+      (book) => book.finished === (finished === "1")
+    );
+  }
+
+  const responseBook = filteredBooks.map((book) => ({
     id: book.id,
     name: book.name,
     publisher: book.publisher,
   }));
 
-  return {
-    status: "success",
-    data: {
-      books: filteredBook,
-    },
-  };
+  return h
+    .response({
+      status: "success",
+      data: {
+        books: responseBook,
+      },
+    })
+    .code(200);
 };
 
 const getBookByIdHandler = (request, h) => {
@@ -182,9 +206,32 @@ const editBookHandler = (request, h) => {
     .code(200);
 };
 
+const deleteBookHandler = (request, h) => {
+  const { id } = request.params;
+  const index = books.findIndex((book) => book.id === id);
+
+  if (index === -1) {
+    return h
+      .response({
+        status: "fail",
+        message: "Buku gagal dihapus. Id tidak ditemukan",
+      })
+      .code(404);
+  }
+
+  books.splice(index, 1);
+  return h
+    .response({
+      status: "success",
+      message: "Buku berhasil dihapus",
+    })
+    .code(200);
+};
+
 module.exports = {
   addBookHandler,
   getAllBooksHandler,
   getBookByIdHandler,
   editBookHandler,
+  deleteBookHandler,
 };
